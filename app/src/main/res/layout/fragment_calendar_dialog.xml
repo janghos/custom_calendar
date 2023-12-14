@@ -1,36 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical">
-
-
-    <com.prolificinteractive.materialcalendarview.MaterialCalendarView
-        android:id="@+id/calendar_view"
-        android:layout_width="match_parent"
+<layout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="24dp"
-        android:theme="@style/CalenderViewCustom"
-        app:mcv_selectionMode="range"
-        app:mcv_showOtherDates="all"
-        app:mcv_firstDayOfWeek="sunday"
-        app:mcv_rightArrow="@drawable/icon_slide_arrow_right"
-        app:mcv_leftArrow="@drawable/icon_slide_arrow_left"
-        app:mcv_dateTextAppearance="@style/CalenderViewDateCustomText"
-        app:mcv_weekDayTextAppearance="@style/CalenderViewWeekCustomText" />
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn_apply_date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:background="@drawable/button_1b335a_bg"
-        android:includeFontPadding="false"
-        android:text="날짜선택"
-        android:textColor="@color/white"
-        android:textSize="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_margin="10dp"/>
-</LinearLayout>
+
+        <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+            android:id="@+id/calendar_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="24dp"
+            android:theme="@style/CalenderViewCustom"
+            app:mcv_selectionMode="range"
+            app:mcv_showOtherDates="all"
+            app:mcv_firstDayOfWeek="sunday"
+            app:mcv_rightArrow="@drawable/icon_slide_arrow_right"
+            app:mcv_leftArrow="@drawable/icon_slide_arrow_left"
+            app:mcv_dateTextAppearance="@style/CalenderViewDateCustomText"
+            app:mcv_weekDayTextAppearance="@style/CalenderViewWeekCustomText" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_apply_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/button_1b335a_bg"
+            android:includeFontPadding="false"
+            android:text="날짜선택"
+            android:textColor="@color/white"
+            android:textSize="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_margin="10dp"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_holiday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/button_1b335a_bg"
+            android:includeFontPadding="false"
+            android:text="공휴일 비활성"
+            android:textColor="@color/white"
+            android:textSize="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_margin="10dp"/>
+    </LinearLayout>
+</layout>

@@ -5,33 +5,39 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
-import androidx.fragment.app.DialogFragment
 import android.text.style.ForegroundColorSpan
-import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.jangho.myapplication.calendarData.Item
-import com.prolificinteractive.materialcalendarview.*
+import com.jangho.myapplication.databinding.ActivityMainBinding
+import com.jangho.myapplication.databinding.FragmentCalendarDialogBinding
+import com.prolificinteractive.materialcalendarview.CalendarDay
+import com.prolificinteractive.materialcalendarview.DayViewDecorator
+import com.prolificinteractive.materialcalendarview.DayViewFacade
+import com.prolificinteractive.materialcalendarview.MaterialCalendarView
 import org.threeten.bp.DayOfWeek
+import java.io.IOException
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.time.Duration.Companion.days
 
 
 class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerListener {
+
+    private lateinit var binding: FragmentCalendarDialogBinding
 
     private var isRangeSelect = false
     private var startDate = ""
     private var endDate = ""
     private var selectSingleDate = ""
 
-    var calendarView: MaterialCalendarView? = null
     var holidayList: List<Item> = emptyList()
+    lateinit var mView : View
 
     companion object {
         fun newInstance(): CalendarDialogFragment {
@@ -52,19 +58,18 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val builder = context?.let { AlertDialog.Builder(it) }
-        val inflater = LayoutInflater.from(context)
-        val view = inflater.inflate(R.layout.fragment_calendar_dialog, null)
+        holidayList = readJsonFromAssets(requireContext(), "holiday_korea.json")
 
-        calendarView = view.findViewById(R.id.calendar_view)
+        val builder = AlertDialog.Builder(requireContext())
+        binding = FragmentCalendarDialogBinding.inflate(layoutInflater)
 
-        calendarView?.setOnTitleClickListener {
+        binding.calendarView.setOnTitleClickListener {
             val datePickerSpinner = DatePickerSpinner()
             datePickerSpinner.setDatePickerListener(this)
             datePickerSpinner.show(parentFragmentManager, "DatePickerSpinner")
         }
 
-        view.findViewById<Button>(R.id.btn_apply_date).setOnClickListener {
+        binding.btnApplyDate.setOnClickListener {
 
             if(isRangeSelect){
                 onDateSelectListener.onRangeDateSelect(startDate, endDate)
@@ -79,16 +84,12 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
                     onDateSelectListener.onSingleDateSelect(selectSingleDate)
                 }
             }
-
             dismiss()
         }
 
-        holidayList = getItemsFromSharedPreferences()
-
-
-        configureCalendarView(calendarView!!)
-        builder?.setView(view)
-        return builder?.create() ?: throw IllegalStateException("Activity cannot be null")
+        configureCalendarView(binding.calendarView)
+        builder.setView(binding.root)
+        return builder.create()
 
     }
 
@@ -124,6 +125,20 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
             // Decorators 추가
             selectedMonthDecorator = SelectedMonthDecorator(date.month)
+            calendarView.addDecorators(dayDecorator, todayDecorator, sundayDecorator, saturdayDecorator, selectedMonthDecorator, holidayDecorator(holidayList))
+        }
+
+        binding.btnHoliday.setOnClickListener {
+            calendarView.removeDecorators()
+            calendarView.invalidateDecorators()
+
+            if(holidayList.isEmpty()) {
+                binding.btnHoliday.setText("공휴일 비활성")
+                holidayList = readJsonFromAssets(requireContext(), "holiday_korea.json")
+            }else {
+                binding.btnHoliday.setText("공휴일 활성")
+                holidayList = emptyList()
+            }
             calendarView.addDecorators(dayDecorator, todayDecorator, sundayDecorator, saturdayDecorator, selectedMonthDecorator, holidayDecorator(holidayList))
         }
 
@@ -171,6 +186,23 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         }
     }
 
+    private fun readJsonFromAssets(context: Context, fileName: String): List<Item> {
+        var items: List<Item> = emptyList()
+        try {
+            val inputStream = context.assets.open(fileName)
+            val size = inputStream.available()
+            val buffer = ByteArray(size)
+            inputStream.read(buffer)
+            inputStream.close()
+            val json = String(buffer, Charset.defaultCharset())
+
+            // Gson을 사용하여 JSON을 List<Item>으로 파싱
+            items = Gson().fromJson(json, object : TypeToken<List<Item>>() {}.type)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return items
+    }
 
     /* 선택된 날짜의 background를 설정하는 클래스 */
     private inner class DayDecorator(context: Context) : DayViewDecorator {
@@ -191,8 +223,8 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         val currentDate = SimpleDateFormat("yyyy-MM-dd").format(selectedDate.time).toString()
         selectSingleDate = currentDate
 
-        calendarView?.clearSelection()
-        calendarView?.selectionMode = MaterialCalendarView.SELECTION_MODE_RANGE
+        binding.calendarView.clearSelection()
+        binding.calendarView.selectionMode = MaterialCalendarView.SELECTION_MODE_RANGE
 
         isRangeSelect = false
 
@@ -203,28 +235,8 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         val selectedCalendarDay = CalendarDay.from(year, month, dayOfMonth)
 
         // CalendarView에 선택된 날짜 설정
-        calendarView?.setDateSelected(selectedCalendarDay, true)
-        calendarView?.setCurrentDate(selectedCalendarDay.date)
-    }
-
-    private fun getItemsFromSharedPreferences(): List<Item> {
-        // SharedPreferences 객체 생성
-        val sharedPreferences = requireContext().getSharedPreferences("app_data", 0)
-
-        // null 체크 추가
-        return if (sharedPreferences != null) {
-            // 저장된 JSON 문자열을 읽어옴
-            val itemsJson = sharedPreferences.getString("holidayList", null)
-
-            // JSON 문자열을 객체로 변환
-            if (itemsJson != null) {
-                Gson().fromJson(itemsJson, object : TypeToken<List<Item>>() {}.type)
-            } else {
-                emptyList()
-            }
-        } else {
-            emptyList()
-        }
+        binding.calendarView.setDateSelected(selectedCalendarDay, true)
+        binding.calendarView.setCurrentDate(selectedCalendarDay.date)
     }
 
     /* 오늘 날짜의 background를 설정하는 클래스 */
