@@ -9,21 +9,46 @@ import androidx.fragment.app.DialogFragment
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
+import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.jangho.myapplication.calendarData.Item
 import com.prolificinteractive.materialcalendarview.*
 import org.threeten.bp.DayOfWeek
+import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.time.Duration.Companion.days
 
 
 class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerListener {
 
+    private var isRangeSelect = false
+    private var startDate = ""
+    private var endDate = ""
+    private var selectSingleDate = ""
+
     var calendarView: MaterialCalendarView? = null
     var holidayList: List<Item> = emptyList()
 
+    companion object {
+        fun newInstance(): CalendarDialogFragment {
+            return CalendarDialogFragment()
+        }
+    }
+
+    interface OnDateSelectListener {
+        fun onSingleDateSelect(selectDate : String)
+        fun onRangeDateSelect(startDate : String, endDate : String)
+    }
+
+    fun setOnDateSelectListener(listener: OnDateSelectListener){
+        onDateSelectListener = listener
+    }
+
+    private lateinit var onDateSelectListener : OnDateSelectListener
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
@@ -37,6 +62,25 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
             val datePickerSpinner = DatePickerSpinner()
             datePickerSpinner.setDatePickerListener(this)
             datePickerSpinner.show(parentFragmentManager, "DatePickerSpinner")
+        }
+
+        view.findViewById<Button>(R.id.btn_apply_date).setOnClickListener {
+
+            if(isRangeSelect){
+                onDateSelectListener.onRangeDateSelect(startDate, endDate)
+            } else {
+                if(selectSingleDate.isEmpty()){
+                    val date = Date(System.currentTimeMillis())
+                    val calendar = android.icu.util.Calendar.getInstance()
+                    calendar.time = date
+                    val currentDate = SimpleDateFormat("yyyy-MM-dd").format(calendar.time).toString()
+                    onDateSelectListener.onSingleDateSelect(currentDate)
+                }else{
+                    onDateSelectListener.onSingleDateSelect(selectSingleDate)
+                }
+            }
+
+            dismiss()
         }
 
         holidayList = getItemsFromSharedPreferences()
@@ -55,17 +99,6 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         val sundayDecorator = SundayDecorator()
         val saturdayDecorator = SaturdayDecorator()
         var selectedMonthDecorator = SelectedMonthDecorator(CalendarDay.today().month)
-
-        // 선택된 날짜 리스너 설정 (필요한 경우)
-        calendarView.setOnDateChangedListener { widget, date, selected ->
-            // 선택된 날짜에 대한 작업 수행
-            val selectedDate = date.date
-//            Toast.makeText(
-//                requireContext(),
-//                "Selected Date: $selectedDate",
-//                Toast.LENGTH_SHORT
-//            ).show()
-        }
 
 
         calendarView.addDecorators(dayDecorator, todayDecorator, sundayDecorator, saturdayDecorator, selectedMonthDecorator, holidayDecorator(holidayList))
@@ -94,6 +127,48 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
             calendarView.addDecorators(dayDecorator, todayDecorator, sundayDecorator, saturdayDecorator, selectedMonthDecorator, holidayDecorator(holidayList))
         }
 
+        val calendar = android.icu.util.Calendar.getInstance()
+
+        calendarView.setOnDateChangedListener { widget, date, selected ->
+            calendar.set(android.icu.util.Calendar.YEAR, date.year)
+            calendar.set(android.icu.util.Calendar.MONTH, date.month-1)
+            calendar.set(android.icu.util.Calendar.DATE, date.day)
+
+
+            if(!selected) {
+                widget.selectedDate = date
+                selectSingleDate = ""
+            }
+
+            selectSingleDate = SimpleDateFormat("yyyy-MM-dd").format(calendar.time).toString()
+
+            if(selectSingleDate.isNotEmpty()) {
+                MaterialCalendarView.SELECTION_MODE_RANGE
+            } else {
+                MaterialCalendarView.SELECTION_MODE_SINGLE
+            }
+            isRangeSelect = false
+
+        }
+
+        calendarView.setOnRangeSelectedListener { widget, dates ->
+
+            val calendar = android.icu.util.Calendar.getInstance()
+
+            calendar.set(android.icu.util.Calendar.YEAR, dates[0].year)
+            calendar.set(android.icu.util.Calendar.MONTH, dates[0].month-1)
+            calendar.set(android.icu.util.Calendar.DATE, dates[0].day)
+
+            startDate = SimpleDateFormat("yyyy-MM-dd").format(calendar.time).toString()
+
+            calendar.set(android.icu.util.Calendar.YEAR, dates.last().year)
+            calendar.set(android.icu.util.Calendar.MONTH, dates.last().month-1)
+            calendar.set(android.icu.util.Calendar.DATE, dates.last().day)
+
+            endDate =  SimpleDateFormat("yyyy-MM-dd").format(calendar.time).toString()
+
+            isRangeSelect = true
+        }
     }
 
 
@@ -108,6 +183,47 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         // 일자 선택 시 내가 정의한 드로어블이 적용되도록 한다
         override fun decorate(view: DayViewFacade) {
             view.setSelectionDrawable(drawable!!)
+        }
+    }
+
+    override fun onDateSelected(selectedDate: Calendar) {
+
+        val currentDate = SimpleDateFormat("yyyy-MM-dd").format(selectedDate.time).toString()
+        selectSingleDate = currentDate
+
+        calendarView?.clearSelection()
+        calendarView?.selectionMode = MaterialCalendarView.SELECTION_MODE_RANGE
+
+        isRangeSelect = false
+
+        // 새로 선택된 날짜를 CalendarDay로 변환
+        val year = selectedDate.get(Calendar.YEAR)
+        val month = selectedDate.get(Calendar.MONTH) + 1
+        val dayOfMonth = selectedDate.get(Calendar.DAY_OF_MONTH)
+        val selectedCalendarDay = CalendarDay.from(year, month, dayOfMonth)
+
+        // CalendarView에 선택된 날짜 설정
+        calendarView?.setDateSelected(selectedCalendarDay, true)
+        calendarView?.setCurrentDate(selectedCalendarDay.date)
+    }
+
+    private fun getItemsFromSharedPreferences(): List<Item> {
+        // SharedPreferences 객체 생성
+        val sharedPreferences = requireContext().getSharedPreferences("app_data", 0)
+
+        // null 체크 추가
+        return if (sharedPreferences != null) {
+            // 저장된 JSON 문자열을 읽어옴
+            val itemsJson = sharedPreferences.getString("holidayList", null)
+
+            // JSON 문자열을 객체로 변환
+            if (itemsJson != null) {
+                Gson().fromJson(itemsJson, object : TypeToken<List<Item>>() {}.type)
+            } else {
+                emptyList()
+            }
+        } else {
+            emptyList()
         }
     }
 
@@ -170,46 +286,6 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
         override fun decorate(view: DayViewFacade) {
             view.addSpan(object:ForegroundColorSpan(Color.BLUE){})
-        }
-    }
-
-    override fun onDateSelected(selectedDate: Calendar) {
-        val currentlySelectedDate = calendarView?.selectedDate
-
-        currentlySelectedDate?.let {
-            calendarView?.clearSelection()
-        }
-
-        // 새로 선택된 날짜를 CalendarDay로 변환
-        val year = selectedDate.get(Calendar.YEAR)
-        val month = selectedDate.get(Calendar.MONTH) + 1
-        val dayOfMonth = selectedDate.get(Calendar.DAY_OF_MONTH)
-        val selectedCalendarDay = CalendarDay.from(year, month, dayOfMonth)
-
-        // CalendarView에 선택된 날짜 설정
-        calendarView?.setDateSelected(selectedCalendarDay, true)
-        calendarView?.setDateSelected(selectedCalendarDay, true)
-
-        calendarView?.setCurrentDate(selectedCalendarDay.date)
-    }
-
-    private fun getItemsFromSharedPreferences(): List<Item> {
-        // SharedPreferences 객체 생성
-        val sharedPreferences = requireContext().getSharedPreferences("app_data", 0)
-
-        // null 체크 추가
-        return if (sharedPreferences != null) {
-            // 저장된 JSON 문자열을 읽어옴
-            val itemsJson = sharedPreferences.getString("holidayList", null)
-
-            // JSON 문자열을 객체로 변환
-            if (itemsJson != null) {
-                Gson().fromJson(itemsJson, object : TypeToken<List<Item>>() {}.type)
-            } else {
-                emptyList()
-            }
-        } else {
-            emptyList()
         }
     }
 }

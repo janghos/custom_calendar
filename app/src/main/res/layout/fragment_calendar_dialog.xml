@@ -20,4 +20,17 @@
         app:mcv_leftArrow="@drawable/icon_slide_arrow_left"
         app:mcv_dateTextAppearance="@style/CalenderViewDateCustomText"
         app:mcv_weekDayTextAppearance="@style/CalenderViewWeekCustomText" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_apply_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/button_1b335a_bg"
+        android:includeFontPadding="false"
+        android:text="날짜선택"
+        android:textColor="@color/white"
+        android:textSize="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="10dp"/>
 </LinearLayout>
