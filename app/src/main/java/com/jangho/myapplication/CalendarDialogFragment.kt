@@ -45,8 +45,10 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
     private var isRangeSelect = false
     private var startDate = ""
     private var endDate = ""
-    private var startTime = ""
+    private var startH = ""
+    private var startM = ""
     private var selectSingleDate = ""
+    private var startTime = ""
 
     var holidayList: List<Item> = emptyList()
     lateinit var mView : View
@@ -79,13 +81,27 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
         val hours = (0..24).map { it.toString().padStart(2, '0') } // 0부터 24까지의 시간 생성
         val minutes = (0..59).map { it.toString().padStart(2, '0') } // 0부터 59까지의 분 생성
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, hours)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spinner.adapter = adapter
+        val hourAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, hours)
+        hourAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spinnerH.adapter = hourAdapter
 
-        binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        binding.spinnerH.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                startTime = binding.spinner.getItemAtPosition(position).toString()
+                startH = binding.spinnerH.getItemAtPosition(position).toString()
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+
+            }
+        }
+
+        val minuteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, minutes)
+        minuteAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spinnerM.adapter = minuteAdapter
+
+        binding.spinnerM.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                startM = binding.spinnerM.getItemAtPosition(position).toString()
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {
@@ -102,6 +118,7 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         binding.btnApplyDate.setOnClickListener {
 
             if(isRangeSelect){
+                startTime = "$startH : $startM"
                 onDateSelectListener.onRangeDateSelect(startDate, endDate, startTime)
 
             } else {

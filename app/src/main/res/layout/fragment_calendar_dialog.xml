@@ -23,17 +23,35 @@
             app:mcv_dateTextAppearance="@style/CalenderViewDateCustomText"
             app:mcv_weekDayTextAppearance="@style/CalenderViewWeekCustomText" />
 
-        <Spinner
-            android:id="@+id/spinner"
-            android:padding="8dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="12dp"
-            android:textColor="@color/black"
-            android:drawableRight="@drawable/icon_slide_arrow_left"
-            android:background="@drawable/background_spinner_option"/>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <Spinner
+                android:id="@+id/spinner_h"
+                android:padding="8dp"
+                android:layout_marginHorizontal="10dp"
+                android:layout_width="85dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@color/black"
+                android:drawableRight="@drawable/icon_slide_arrow_left"
+                android:background="@drawable/background_spinner_option"/>
+            <Spinner
+                android:id="@+id/spinner_m"
+                android:padding="8dp"
+                android:layout_width="85dp"
+                android:layout_marginHorizontal="10dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@color/black"
+                android:drawableRight="@drawable/icon_slide_arrow_left"
+                android:background="@drawable/background_spinner_option"/>
+
+        </LinearLayout>
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_apply_date"
             android:layout_width="200dp"
