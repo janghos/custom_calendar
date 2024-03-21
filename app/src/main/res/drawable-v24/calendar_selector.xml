@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector android:exitFadeDuration="@android:integer/config_shortAnimTime" xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:state_checked="true"
-        android:drawable="@drawable/transparent_calendar_element" />
-    <item
-        android:state_pressed="true"
-        android:drawable="@drawable/transparent_calendar_element" />
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 눌린 상태 -->
+    <item android:state_pressed="true" android:drawable="@drawable/range_calendar_element" />
+    <!-- 체크된 상태이면서 눌리지 않은 상태 -->
+    <item android:state_checked="true" android:drawable="@drawable/range_calendar_element" />
+    <!-- 나머지 경우 -->
     <item android:drawable="@android:color/transparent" />
 </selector>

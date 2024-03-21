@@ -23,14 +23,16 @@ class MainActivity : AppCompatActivity() {
                     binding.tv3.text = ""
                 }
 
-                override fun onRangeDateSelect(startDate: String, endDate: String) {
+                override fun onRangeDateSelect(startDate: String, endDate: String, time : String) {
                     binding.tv1.text = ""
                     binding.tv2.text = startDate
                     binding.tv3.text = endDate
+                    binding.tv4.text = time
                 }
             })
 
             calendarDialogFragment.show(supportFragmentManager, "calendar_dialog")
         }
     }
+
 }

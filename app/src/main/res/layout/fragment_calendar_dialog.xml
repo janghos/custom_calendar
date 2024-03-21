@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:background="@drawable/background_border"
         android:orientation="vertical">
 
 
         <com.prolificinteractive.materialcalendarview.MaterialCalendarView
             android:id="@+id/calendar_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="10dp"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_gravity="center"
             android:theme="@style/CalenderViewCustom"
             app:mcv_selectionMode="range"
             app:mcv_showOtherDates="all"
@@ -22,9 +23,21 @@
             app:mcv_dateTextAppearance="@style/CalenderViewDateCustomText"
             app:mcv_weekDayTextAppearance="@style/CalenderViewWeekCustomText" />
 
+        <Spinner
+            android:id="@+id/spinner"
+            android:padding="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/black"
+            android:drawableRight="@drawable/icon_slide_arrow_left"
+            android:background="@drawable/background_spinner_option"/>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_apply_date"
-            android:layout_width="match_parent"
+            android:layout_width="200dp"
+            android:layout_gravity="center"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:background="@drawable/button_1b335a_bg"
@@ -37,8 +50,9 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_holiday"
-            android:layout_width="match_parent"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_marginTop="18dp"
             android:background="@drawable/button_1b335a_bg"
             android:includeFontPadding="false"

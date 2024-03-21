@@ -4,27 +4,38 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Point
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.style.ForegroundColorSpan
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
-import android.widget.Button
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.jangho.myapplication.calendarData.Item
-import com.jangho.myapplication.databinding.ActivityMainBinding
 import com.jangho.myapplication.databinding.FragmentCalendarDialogBinding
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.DayViewDecorator
 import com.prolificinteractive.materialcalendarview.DayViewFacade
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
+import okhttp3.internal.immutableListOf
 import org.threeten.bp.DayOfWeek
 import java.io.IOException
 import java.nio.charset.Charset
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.*
+import java.util.Collections.emptyList
 
 
 class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerListener {
@@ -34,6 +45,7 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
     private var isRangeSelect = false
     private var startDate = ""
     private var endDate = ""
+    private var startTime = ""
     private var selectSingleDate = ""
 
     var holidayList: List<Item> = emptyList()
@@ -47,7 +59,7 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
     interface OnDateSelectListener {
         fun onSingleDateSelect(selectDate : String)
-        fun onRangeDateSelect(startDate : String, endDate : String)
+        fun onRangeDateSelect(startDate : String, endDate : String, time : String)
     }
 
     fun setOnDateSelectListener(listener: OnDateSelectListener){
@@ -58,10 +70,28 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
+
         holidayList = readJsonFromAssets(requireContext(), "holiday_korea.json")
 
         val builder = AlertDialog.Builder(requireContext())
         binding = FragmentCalendarDialogBinding.inflate(layoutInflater)
+
+
+        val hours = (0..24).map { it.toString().padStart(2, '0') } // 0부터 24까지의 시간 생성
+        val minutes = (0..59).map { it.toString().padStart(2, '0') } // 0부터 59까지의 분 생성
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, hours)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spinner.adapter = adapter
+
+        binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                startTime = binding.spinner.getItemAtPosition(position).toString()
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+
+            }
+        }
 
         binding.calendarView.setOnTitleClickListener {
             val datePickerSpinner = DatePickerSpinner()
@@ -72,9 +102,10 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         binding.btnApplyDate.setOnClickListener {
 
             if(isRangeSelect){
-                onDateSelectListener.onRangeDateSelect(startDate, endDate)
+                onDateSelectListener.onRangeDateSelect(startDate, endDate, startTime)
+
             } else {
-                if(selectSingleDate.isEmpty()){
+                if(selectSingleDate == null){
                     val date = Date(System.currentTimeMillis())
                     val calendar = android.icu.util.Calendar.getInstance()
                     calendar.time = date
@@ -93,6 +124,17 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        resizeDialog()
+    }
+
 
     private fun configureCalendarView(calendarView: MaterialCalendarView) {
         val dayDecorator = DayDecorator(requireContext())
@@ -100,7 +142,6 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         val sundayDecorator = SundayDecorator()
         val saturdayDecorator = SaturdayDecorator()
         var selectedMonthDecorator = SelectedMonthDecorator(CalendarDay.today().month)
-
 
         calendarView.addDecorators(dayDecorator, todayDecorator, sundayDecorator, saturdayDecorator, selectedMonthDecorator, holidayDecorator(holidayList))
 
@@ -157,7 +198,7 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
 
             selectSingleDate = SimpleDateFormat("yyyy-MM-dd").format(calendar.time).toString()
 
-            if(selectSingleDate.isNotEmpty()) {
+            if(selectSingleDate != null) {
                 MaterialCalendarView.SELECTION_MODE_RANGE
             } else {
                 MaterialCalendarView.SELECTION_MODE_SINGLE
@@ -181,7 +222,6 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
             calendar.set(android.icu.util.Calendar.DATE, dates.last().day)
 
             endDate =  SimpleDateFormat("yyyy-MM-dd").format(calendar.time).toString()
-
             isRangeSelect = true
         }
     }
@@ -299,5 +339,22 @@ class CalendarDialogFragment : DialogFragment(), DatePickerSpinner.DatePickerLis
         override fun decorate(view: DayViewFacade) {
             view.addSpan(object:ForegroundColorSpan(Color.BLUE){})
         }
+    }
+
+    fun resizeDialog() {
+        val windowManager = requireContext().getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val display = windowManager.defaultDisplay
+
+        dialog!!.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+
+        val size = Point()
+        display.getSize(size)
+        val params: ViewGroup.LayoutParams? = dialog?.window?.attributes
+        val deviceWidth = size.x
+        val deviceHeight = size.y
+        params?.width = 320
+//        params?.width = (deviceWidth * 0.4).toInt()
+        dialog?.window?.attributes = params as WindowManager.LayoutParams
     }
 }
